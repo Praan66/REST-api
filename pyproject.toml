@@ -1,0 +1,21 @@
+[project]
+name = "pgapi"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "fastapi[standard]>=0.135.1",
+    "psy",
+    "psycopg2>=2.9.11",
+    "sqlalchemy>=2.0.48",
+]
+
+[dependency-groups]
+dev = [
+    "bcrypt>=5.0.0",
+    "email-validator>=2.3.0",
+    "psycopg[binary]>=3.3.3",
+    "pytest>=9.0.2",
+    "sqlmodel>=0.0.37",
+]
