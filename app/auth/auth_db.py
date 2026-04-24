@@ -4,7 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.ext.asyncio import async_sessionmaker
 # from sqlalchemy.orm import sessionmaker
-from .base import Base
+from ..db.base import Base
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -22,17 +22,15 @@ def create_tables():
     # Base.metadata.create_all(sync_engine)
 
 
-asyncsession_postgres_url = f"postgresql+asyncpg://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-print("Connecting to:", asyncsession_postgres_url)
-async_engine = create_async_engine(asyncsession_postgres_url, echo=True, future=True)
+session_postgres_url = f"postgresql+asyncpg://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+print("Connecting to:", session_postgres_url)
+async_engine = create_async_engine(session_postgres_url, echo=True, future=True)
 
 AsyncSessionLocal = async_sessionmaker(bind=async_engine, class_=AsyncSession,autoflush=False, expire_on_commit=False)
 
 
 # import app.db.models
-from .models.users import User
-
-
+from .auth_model.Ulogin import User_tb
 async def get_db():
     async with AsyncSessionLocal() as db:
         yield db
@@ -42,13 +40,6 @@ async def get_db():
     # finally:
     #     await db.close()
 
-
-
-
 if __name__ == "__main__":
     create_tables()
     print("Tables created successfully!!")
-# passlib[argon2](to hash our password)
-# python-jose[cryptography](use for creating jwt token)
-# python-multipart(used for parse multipart form data)
-# pydantic[email](validation for email need to be in emailformat)
