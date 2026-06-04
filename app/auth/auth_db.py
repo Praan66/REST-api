@@ -13,17 +13,17 @@ DB_PASSWORD = os.getenv("POSTGRES_PASSWORD")
 DB_HOST = os.getenv("POSTGRES_HOST")
 DB_PORT = os.getenv("POSTGRES_PORT")
 DB_NAME = os.getenv("POSTGRES_DBNAME")
-
+DATABASE_URL = f"{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 def create_tables():
-    sync_postgres_url = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+    sync_postgres_url = f"postgresql://{DATABASE_URL}"
     sync_engine = create_engine(sync_postgres_url, echo=True, future=True)
     with sync_engine.begin() as conn:
         Base.metadata.create_all(conn)
     # Base.metadata.create_all(sync_engine)
 
 
-session_postgres_url = f"postgresql+asyncpg://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-print("Connecting to:", session_postgres_url)
+session_postgres_url = f"postgresql+asyncpg://{DATABASE_URL}"
+# print("Connecting to:", session_postgres_url)
 async_engine = create_async_engine(session_postgres_url, echo=True, future=True)
 
 AsyncSessionLocal = async_sessionmaker(bind=async_engine, class_=AsyncSession,autoflush=False, expire_on_commit=False)

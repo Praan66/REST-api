@@ -3,24 +3,24 @@ name = "pgapi"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.14"
+requires-python = ">=3.12"
 dependencies = [
+    "aiofiles>=25.1.0",
     "asyncpg>=0.31.0",
     "fastapi[standard]>=0.135.1",
+    "gunicorn>=26.0.0",
     "passlib[argon2]>=1.7.4",
-    "psy",
-    "psycopg2>=2.9.11",
     "pydantic[email]>=2.12.5",
     "python-jose[cryptography]>=3.5.0",
     "python-multipart>=0.0.22",
     "sqlalchemy>=2.0.48",
+    "uvicorn[standard]>=0.41.0",
 ]
 
 [dependency-groups]
 dev = [
     "bcrypt>=5.0.0",
     "email-validator>=2.3.0",
-    "psycopg[binary]>=3.3.3",
     "pytest>=9.0.2",
     "sqlmodel>=0.0.37",
 ]

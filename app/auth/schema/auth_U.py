@@ -4,14 +4,24 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 # schema for user signup or registration
-class UserCreate(BaseModel):
+# Request & Response
+class UserSignUpRequest(BaseModel):
     username: str
     email: EmailStr
     password: str
     role: str
+class UserSignUpResponse(BaseModel):
+    id: UUID
+    username: str
+    email: EmailStr
+    role: str
+
 
 # schema for user login schema
-class UserLogin(BaseModel):
-    username: str
-    # email: EmailStr
-    password: str
+# class UserLoginRequest(BaseModel):
+#     username: str
+#     # email: EmailStr
+#     password: str #we are already using OAuthPasswordRequestForm
+class UserLoginResponse(BaseModel):
+    access_token: str
+    token_type: str

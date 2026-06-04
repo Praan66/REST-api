@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, status
 
 # from sqlalchemy.orm import Session
@@ -5,11 +7,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, text
 from sqlalchemy.orm import selectinload
 
-from app.schemas.users import ProfileResponse
-from app.services.users import my_profile
-from ..db.models import User
+from ..schemas.users import ProfileResponse
+from ..services.users import my_profile
+from ..db.models.users import User
 from .auth_model.Ulogin import User_tb
-from .schema.auth_U import UserCreate, UserLogin
+from .schema.auth_U import UserSignUpRequest, UserSignUpResponse, UserLoginResponse
 from .utils.utils import hashing_password, verify_password
 from .auth_db import get_db
 from jose import ExpiredSignatureError, jwt, JWTError #
@@ -52,13 +54,15 @@ def create_access_token(data: dict):
 router = APIRouter()
 
 """
-Create an endpoint which take userdata(UserCreate model)& db,
+Create an endpoint which take userdata(UserSignUpRequest model)& db,
 (query)check user exist or not?,
 
 """
 @router.post("/signup")
-async def register_user(user: UserCreate, db: AsyncSession = Depends(get_db)):
-    query = select(User).where((User.username == user.username) | (User.email_id == user.email))
+async def register_user(user: UserSignUpRequest, db: AsyncSession = Depends(get_db)):
+    user_name = user.username.strip()
+    email_of_user = user.email.strip().lower()
+    query = select(User).where((User.username == user_name) | (User.email_id == email_of_user))
     result = await db.execute(query)
     user_exist = result.scalars().first()
     if user_exist:
@@ -72,8 +76,8 @@ async def register_user(user: UserCreate, db: AsyncSession = Depends(get_db)):
     
     # create new_user instance
     new_user = User(
-        username = user.username,
-        email_id = user.email,
+        username = user_name,
+        email_id = email_of_user,
         role = user.role
     )
     # save user in db
@@ -89,17 +93,18 @@ async def register_user(user: UserCreate, db: AsyncSession = Depends(get_db)):
     await db.refresh(new_user)
     await db.refresh(new_cred)
     # return the value (excluding password)
-    return {
-        "id": new_user.id, #
-        "username": new_user.username,
-        "email": new_user.email_id,
-        "role": new_user.role
-    }
+    return UserSignUpResponse(
+        id = new_user.id,
+        username = new_user.username,
+        email = new_user.email_id,
+        role = new_user.role
+    )
 
 
-@router.post("/login")
+@router.post("/login", response_model=UserLoginResponse)
 async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
-    query = select(User).where((User.username == form_data.username) | (User.email_id == form_data.username)).options(selectinload(User.credential))
+    identifier = form_data.username.strip()
+    query = select(User).where((User.username == identifier) | (User.email_id == identifier)).options(selectinload(User.credential))
     result = await db.execute(query)
     user = result.scalars().first()
     if not user or not user.credential:
@@ -109,7 +114,8 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSessi
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
     token_data = {"sub": str(user.id), "role": user.role}
     token = create_access_token(token_data)
-    return {"access_token": token, "token_type": "bearer"}
+    # return {"access_token": token, "token_type": "bearer"}
+    return UserLoginResponse(access_token=token, token_type="bearer")
     # if user is None:
     #     raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid Username!!")
     # if not verify_password(form_data.password, user.hashed_password):
@@ -117,7 +123,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSessi
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
-async def get_current_user(token: str = Depends(oauth2_scheme)):
+async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)):
     credential_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED, 
         detail="Couldn't validate credentials", 
@@ -135,8 +141,15 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token Expired!!")
     except JWTError:
         raise credential_exception
+    try:
+        user_uuid = UUID(user_id)
+    except Exception:
+        raise credential_exception
+    user_exit_in_db = await db.get(User, user_uuid)
+    if not user_exit_in_db:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User no longer exists (account deleted)")
 
-    return {"sub": user_id, "role": role}
+    return {"sub": str(user_uuid), "role": role}
 
 
 def require_roles(allowed_roles: list[str]):
@@ -168,3 +181,8 @@ async def user_dashboard(current_user: dict = Depends(require_roles(["user"]))):
 async def admin_dashboard(current_admin: dict = Depends(require_roles(["admin"]))):
     return {"message": "Welcome Admin"}
 
+"""
+add post - text compulsory, image(image+title)+content, 
+video(video+title)+content and frontend
+frontend to show than distributed microservice(fintech-Banking Transaction system)(Go), event-driven notification system(rust), web scrapping(rust, Go, python), distributed url shortner(rust or Go)
+"""
