@@ -7,26 +7,31 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, text
 from sqlalchemy.orm import selectinload
 
-from ..schemas.users import ProfileResponse
-from ..services.users import my_profile
-from ..db.models.users import User
-from .auth_model.Ulogin import User_tb
-from .schema.auth_U import UserSignUpRequest, UserSignUpResponse, UserLoginResponse
-from .utils.utils import hashing_password, verify_password
-from .auth_db import get_db
+from app.schemas.users import ProfileResponse
+from app.services.users import my_profile
+from app.db.models.users import User
+from app.auth.auth_model.Ulogin import User_tb
+from app.auth.schema.auth_U import UserSignUpRequest, UserSignUpResponse, UserLoginResponse
+from app.auth.utils.utils import hashing_password, verify_password
+from app.auth.auth_db import get_db
 from jose import ExpiredSignatureError, jwt, JWTError #
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from datetime import datetime, timedelta, timezone
 
-import os
-from dotenv import load_dotenv
+from app.core.secret_keys import settings
 
-load_dotenv()
+SECRET_KEY = settings.ssetting.secret_key
+ALGORITHM = settings.ssetting.algorithm
+SACCESS_TOKEN_EXPIRE_MINUTES = settings.ssetting.access_token_expire_minutes
+value = SACCESS_TOKEN_EXPIRE_MINUTES
 
-SECRET_KEY = os.getenv("SSECRET_KEY")
-ALGORITHM = os.getenv("SALGORITHM")
-# SACCESS_TOKEN_EXPIRE_MINUTES = os.getenv("SACCESS_TOKEN_EXPIRE_MINUTES")
-value = os.getenv("SACCESS_TOKEN_EXPIRE_MINUTES", "30")
+# import os
+# from dotenv import load_dotenv
+# load_dotenv()
+# SECRET_KEY = os.getenv("SSECRET_KEY")
+# ALGORITHM = os.getenv("SALGORITHM")
+# # SACCESS_TOKEN_EXPIRE_MINUTES = os.getenv("SACCESS_TOKEN_EXPIRE_MINUTES")
+# value = os.getenv("SACCESS_TOKEN_EXPIRE_MINUTES", "30")
 if value is None:
     SACCESS_TOKEN_EXPIRE_MINUTES = 30
 else:
@@ -108,7 +113,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSessi
     result = await db.execute(query)
     user = result.scalars().first()
     if not user or not user.credential:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     # user.id->123, user.credential->User_tb, user.credential.hashed_password->"hashedps"
     if not verify_password(form_data.password, user.credential.hashed_password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
@@ -145,7 +150,9 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession
         user_uuid = UUID(user_id)
     except Exception:
         raise credential_exception
-    user_exit_in_db = await db.get(User, user_uuid)
+    query_user_exist = select(User.id).where(User.id == user_uuid)
+    result_user_exist = await db.execute(query_user_exist) 
+    user_exit_in_db = result_user_exist.scalar_one_or_none()
     if not user_exit_in_db:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User no longer exists (account deleted)")
 
@@ -181,8 +188,3 @@ async def user_dashboard(current_user: dict = Depends(require_roles(["user"]))):
 async def admin_dashboard(current_admin: dict = Depends(require_roles(["admin"]))):
     return {"message": "Welcome Admin"}
 
-"""
-add post - text compulsory, image(image+title)+content, 
-video(video+title)+content and frontend
-frontend to show than distributed microservice(fintech-Banking Transaction system)(Go), event-driven notification system(rust), web scrapping(rust, Go, python), distributed url shortner(rust or Go)
-"""

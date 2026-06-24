@@ -17,11 +17,6 @@ class UserSignUpResponse(BaseModel):
     role: str
 
 
-# schema for user login schema
-# class UserLoginRequest(BaseModel):
-#     username: str
-#     # email: EmailStr
-#     password: str #we are already using OAuthPasswordRequestForm
 class UserLoginResponse(BaseModel):
     access_token: str
     token_type: str

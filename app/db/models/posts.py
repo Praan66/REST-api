@@ -5,7 +5,7 @@ import uuid
 
 from sqlalchemy import Column, String, Text, DateTime, ForeignKey, func, text
 from sqlalchemy.orm import relationship
-from ..base import Base
+from app.db.base import Base
 
 class Post(Base):
     __tablename__ = "posts"

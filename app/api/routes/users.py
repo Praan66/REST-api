@@ -1,12 +1,12 @@
 # libs, moduls, methods
 from uuid import UUID
 from fastapi import APIRouter, Depends
-from ...db.db import get_db, async_engine
+from app.db.db import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
-from ...schemas.users import GetUserResponse
+from app.schemas.users import GetUserResponse
 
-from ...services.users import users_route, user_by_id_route, my_profile
-from ...auth.main import require_roles
+from app.services.users import users_route, user_by_id_route, my_profile
+from app.auth.main import require_roles
 
 router = APIRouter(prefix="/users") # mini application
 

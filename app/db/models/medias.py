@@ -3,7 +3,7 @@ from sqlalchemy import Column, Enum, ForeignKey, Integer, String, func, text
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID
 from app.db.base import Base
-from  .enum.enum import MediaType
+from app.db.models.enum.enum import MediaType
 
 class PostMedia(Base):
     __tablename__ = "postmedia"

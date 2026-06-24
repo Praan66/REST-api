@@ -5,7 +5,7 @@ from fastapi import HTTPException, status
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 # from ..auth.auth_model.Ulogin import User_tb 
-from ..db.models.users import User
+from app.db.models.users import User
 
 async def users_route(db: AsyncSession):
     query = select(User).order_by(User.id)
